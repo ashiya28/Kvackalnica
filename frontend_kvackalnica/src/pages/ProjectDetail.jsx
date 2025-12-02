@@ -6,6 +6,7 @@ import YarnCorner from "../components/YarnCorner";
 import HomeButton from "../components/HomeButton";
 import ImageUpload from "../components/ImageUpload";
 import ImageGallery from "../components/ImageGallery";
+import StarRating from '../components/StarRating';
 
 function ProjectDetail() {
     const { projectId } = useParams();
@@ -22,25 +23,21 @@ function ProjectDetail() {
             return;
         }
         fetchProject();
-    }, [projectId, navigate, isAuthenticated]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [projectId]);
 
     const fetchProject = async () => {
         try {
-            console.log('Fetching project with ID:', projectId);
             const response = await fetch(`http://localhost:5000/api/projects/${projectId}`, {
                 method: 'GET',
                 headers: getAuthHeaders()
             });
 
-            console.log('Response status:', response.status);
-            
             if (response.ok) {
                 const projectData = await response.json();
-                console.log('Project data received:', projectData);
                 setProject(projectData);
             } else {
-                const errorData = await response.json();
-                console.error('Error response:', errorData);
+                const errorData = await response.json().catch(() => ({}));
                 alert(`Projekt ni najden! ${errorData.error || ''}`);
                 navigate('/');
             }
@@ -169,6 +166,25 @@ function ProjectDetail() {
 
                 {/* Image Upload */}
                 <ImageUpload projectId={projectId} onImagesUploaded={handleImagesUploaded} />
+
+                {/* Difficulty Rating (moved before Created Date) */}
+                <div className="mt-6 mb-4 flex justify-center">
+                    <div className="text-center">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Ocena težavnosti</label>
+                        <StarRating
+                            projectId={project.id}
+                            initial={project.difficulty_rating || 3}
+                            getAuthHeaders={getAuthHeaders}
+                            onSaved={(updatedProject) => {
+                                if (updatedProject && updatedProject.id) {
+                                    setProject(prev => ({ ...prev, ...updatedProject }));
+                                } else if (updatedProject && updatedProject.difficulty_rating) {
+                                    setProject(prev => ({ ...prev, difficulty_rating: updatedProject.difficulty_rating }));
+                                }
+                            }}
+                        />
+                    </div>
+                </div>
 
                 {/* Created Date */}
                 <div className="flex items-center justify-center mb-8">
