@@ -1,0 +1,53 @@
+version: "3.8"
+services:
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: kvack
+      POSTGRES_PASSWORD: mojegeslo
+      POSTGRES_DB: kvackalnica
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  backend:
+    build:
+      context: ./backend_kvackalnica
+      dockerfile: Dockerfile
+    restart: on-failure
+    ports:
+      - "5000:5000"
+    environment:
+      DATABASE_URL: "postgres://kvack:mojegeslo@db:5432/kvackalnica"
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: kvack
+      DB_PASSWORD: mojegeslo
+      DB_NAME: kvackalnica
+      PORT: 5000
+    depends_on:
+      - db
+    volumes:
+      - ./backend_kvackalnica:/app
+      - ./backend_kvackalnica/uploads:/app/uploads
+
+  frontend:
+    build:
+      context: ./frontend_kvackalnica
+      dockerfile: Dockerfile
+    volumes:
+      - ./frontend_kvackalnica:/app:cached
+      # IMPORTANT: don't mount host node_modules over container's, keep anonymous mount to avoid mismatches
+      - /app/node_modules
+    environment:
+      - HOST=0.0.0.0
+      - PORT=5173
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

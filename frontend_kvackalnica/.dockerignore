@@ -1,0 +1,10 @@
+node_modules
+npm-debug.log*
+yarn-debug.log*
+.env
+.git
+.gitignore
+docker-compose.yml
+Dockerfile
+frontend_kvackalnica/dist
+frontend_kvackalnica/build
