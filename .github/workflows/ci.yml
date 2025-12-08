@@ -1,37 +1,66 @@
-name: Full Project Kvackalnica CI
+name: Kvackalnica Full CI
 
 on:
-  pull_request:
-    branches: [ main, pre-production ]
   push:
+    branches: [ main, pre-production ]
+  pull_request:
     branches: [ main, pre-production ]
 
 jobs:
-  build:
+  test-frontend:
+    name: Test Frontend
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        folder: [ "backend_kvackalnica", "frontend_kvackalnica" ]
-
     defaults:
       run:
-        working-directory: ${{ matrix.folder }}
+        working-directory: frontend_kvackalnica
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
-    - name: Install dependencies
-      run: npm install
+      - name: Install deps
+        run: npm install
 
-    - name: Build project
-      run: npm run build --if-present
+      - name: Run tests with coverage
+        run: npm test -- --coverage
 
-    - name: Run tests
-      run: npm test --if-present
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend_kvackalnica/coverage
+
+  test-backend:
+    name: Test Backend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend_kvackalnica
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install deps
+        run: npm install
+
+      - name: Run backend tests with coverage
+        env:
+          JWT_SECRET: testsecret
+        run: npm test -- --coverage
+
+      - name: Upload backend coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend_kvackalnica/coverage
