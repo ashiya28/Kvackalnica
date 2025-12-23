@@ -5,6 +5,7 @@ import Header from "../components/Header";
 import YarnCorner from "../components/YarnCorner";
 import HomeButton from "../components/HomeButton";
 import ImageGallery from "../components/ImageGallery";
+import { API_BASE } from "../apiBase";
 
 function ProjectsInProgress() {
     const [projects, setProjects] = useState([]);
@@ -42,7 +43,7 @@ function ProjectsInProgress() {
         }
 
         try {
-            const response = await fetch('http://localhost:5000/api/projects/myprojects', {
+            const response = await fetch(`${API_BASE}/api/projects/myprojects`, {
                 method: 'GET',
                 headers: getAuthHeaders()
             });
@@ -75,7 +76,7 @@ function ProjectsInProgress() {
 
     const markAsFinished = async (projectId) => {
         try {
-            const response = await fetch(`http://localhost:5000/api/projects/${projectId}`, {
+            const response = await fetch(`${API_BASE}/api/projects/${projectId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -111,7 +112,7 @@ function ProjectsInProgress() {
         }
 
         try {
-            const response = await fetch(`http://localhost:5000/api/projects/${projectId}`, {
+            const response = await fetch(`${API_BASE}/api/projects/${projectId}`, {
                 method: 'DELETE',
                 headers: getAuthHeaders()
             });

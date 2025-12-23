@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { API_BASE } from "../apiBase";
 
 function ImageUpload({ projectId, onImagesUploaded }) {
   const [isUploading, setIsUploading] = useState(false);
@@ -30,7 +31,7 @@ function ImageUpload({ projectId, onImagesUploaded }) {
       // Get token from sessionStorage for FormData requests
       const token = sessionStorage.getItem('token');
       
-      const response = await fetch(`http://localhost:5000/api/projects/${projectId}/images`, {
+      const response = await fetch(`${API_BASE}/api/projects/${projectId}/images`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
