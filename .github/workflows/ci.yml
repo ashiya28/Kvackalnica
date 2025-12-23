@@ -13,6 +13,8 @@ jobs:
     defaults:
       run:
         working-directory: frontend_kvackalnica
+    env:
+      VITE_API_URL: http://localhost:5000
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -74,6 +76,8 @@ jobs:
     defaults:
       run:
         working-directory: frontend_kvackalnica
+    env:
+      VITE_API_URL: http://localhost:5000
     steps:
       - name: Checkout
         uses: actions/checkout@v4
