@@ -5,6 +5,9 @@ yarn-debug.log*
 .git
 .gitignore
 docker-compose.yml
-Dockerfile
 frontend_kvackalnica/dist
 frontend_kvackalnica/build
+jest-cache
+jest-transform-cache
+coverage
+tests
