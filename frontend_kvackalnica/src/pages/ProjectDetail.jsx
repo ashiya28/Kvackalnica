@@ -7,6 +7,7 @@ import HomeButton from "../components/HomeButton";
 import ImageUpload from "../components/ImageUpload";
 import ImageGallery from "../components/ImageGallery";
 import StarRating from '../components/StarRating';
+import { API_BASE } from "../apiBase";
 
 function ProjectDetail() {
     const { projectId } = useParams();
@@ -28,7 +29,7 @@ function ProjectDetail() {
 
     const fetchProject = async () => {
         try {
-            const response = await fetch(`http://localhost:5000/api/projects/${projectId}`, {
+            const response = await fetch(`${API_BASE}/api/projects/${projectId}`, {
                 method: 'GET',
                 headers: getAuthHeaders()
             });
@@ -59,7 +60,7 @@ function ProjectDetail() {
         }
 
         try {
-            const response = await fetch(`http://localhost:5000/api/projects/${projectId}`, {
+            const response = await fetch(`${API_BASE}/api/projects/${projectId}`, {
                 method: 'DELETE',
                 headers: getAuthHeaders()
             });
@@ -84,7 +85,7 @@ function ProjectDetail() {
         }
 
         try {
-            const response = await fetch(`http://localhost:5000/api/projects/${projectId}`, {
+            const response = await fetch(`${API_BASE}/api/projects/${projectId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

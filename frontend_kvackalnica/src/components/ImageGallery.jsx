@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { API_BASE } from "../apiBase";
 
 function ImageGallery({ projectId, refreshTrigger, compact = false }) {
   const [images, setImages] = useState([]);
@@ -27,7 +28,7 @@ function ImageGallery({ projectId, refreshTrigger, compact = false }) {
 
   const fetchImages = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/projects/${projectId}/images`, {
+      const response = await fetch(`${API_BASE}/api/projects/${projectId}/images`, {
         method: 'GET',
         headers: getAuthHeaders()
       });
