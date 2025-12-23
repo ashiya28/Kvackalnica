@@ -1,0 +1,188 @@
+name: Kvackalnica CI/CD
+
+on:
+  push:
+    branches: [ main, pre-production, production ]
+  pull_request:
+    branches: [ main, pre-production, production ]
+
+jobs:
+  test-frontend:
+    name: Test Frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend_kvackalnica
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node (with npm cache)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend_kvackalnica/package-lock.json
+
+      - name: Install deps (ci)
+        run: npm ci
+
+      - name: Run tests with coverage
+        run: npm test -- --coverage
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend_kvackalnica/coverage
+
+  test-backend:
+    name: Test Backend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend_kvackalnica
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node (with npm cache)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend_kvackalnica/package-lock.json
+
+      - name: Install deps (ci)
+        run: npm ci
+
+      - name: Run backend tests with coverage
+        env:
+          JWT_SECRET: testsecret
+        run: npm test -- --coverage
+
+      - name: Upload backend coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend_kvackalnica/coverage
+
+  build-frontend:
+    name: Build Frontend (Vite)
+    runs-on: ubuntu-latest
+    needs: [test-frontend]
+    defaults:
+      run:
+        working-directory: frontend_kvackalnica
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node (with npm cache)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend_kvackalnica/package-lock.json
+
+      - name: Install deps (ci)
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload build artifact (dist)
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend_kvackalnica/dist
+
+  build-backend:
+    name: Build Backend (prep artifact)
+    runs-on: ubuntu-latest
+    needs: [test-backend]
+    defaults:
+      run:
+        working-directory: backend_kvackalnica
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node (with npm cache)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend_kvackalnica/package-lock.json
+
+      - name: Install deps (ci)
+        run: npm ci
+
+      - name: Upload backend artifact (source)
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-app
+          path: |
+            backend_kvackalnica
+            !backend_kvackalnica/node_modules
+            !backend_kvackalnica/coverage
+
+  docker:
+    name: Build & Push Docker Images
+    runs-on: ubuntu-latest
+    needs: [build-frontend, build-backend]
+    if: github.ref == 'refs/heads/pre-production' || github.ref == 'refs/heads/production'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # BACKEND IMAGE
+      - name: Docker meta (backend)
+        id: meta_backend
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ secrets.DOCKER_USERNAME }}/kvackalnica-backend
+          tags: |
+            type=ref,event=branch
+            type=sha
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/production' }}
+
+      - name: Build & push backend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend_kvackalnica
+          file: ./backend_kvackalnica/Dockerfile
+          push: true
+          tags: ${{ steps.meta_backend.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # FRONTEND IMAGE
+      - name: Docker meta (frontend)
+        id: meta_frontend
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ secrets.DOCKER_USERNAME }}/kvackalnica-frontend
+          tags: |
+            type=ref,event=branch
+            type=sha
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/production' }}
+
+      - name: Build & push frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend_kvackalnica
+          file: ./frontend_kvackalnica/Dockerfile
+          push: true
+          tags: ${{ steps.meta_frontend.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

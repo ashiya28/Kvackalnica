@@ -260,4 +260,23 @@ router.put('/:id', verifyToken, async (req, res) => {
   }
 });
 
+// PATCH /api/projects/:id/difficulty
+router.patch('/:id/difficulty', verifyToken, async (req, res) => {
+  const projectId = req.params.id;
+  const userId = req.user && req.user.id; // verifyToken naj nastavi req.user
+  const { difficulty_rating } = req.body;
+  const d = parseInt(difficulty_rating, 10);
+  if (!d || d < 1 || d > 5) return res.status(400).json({ error: 'difficulty_rating must be integer 1..5' });
+
+  try {
+    const q = `UPDATE projects SET difficulty_rating = $1 WHERE id = $2 AND user_id = $3 RETURNING *`;
+    const { rows } = await pool.query(q, [d, projectId, userId]);
+    if (!rows || rows.length === 0) return res.status(404).json({ error: 'Project not found or not owned' });
+    return res.json({ project: rows[0] });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'DB error' });
+  }
+});
+
 module.exports = router;
