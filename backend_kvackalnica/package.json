@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "test": "jest --coverage",
-    "db:init": "node initTables.js"
+    "db:init": "node initTables.js",
+    "start:with-init": "node initTables.js && node server.js"
   },
   "keywords": [],
   "author": "",
