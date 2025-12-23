@@ -190,3 +190,18 @@ jobs:
           tags: ${{ steps.meta_frontend.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  deploy-preprod:
+    name: Deploy to Render (pre-production)
+    runs-on: ubuntu-latest
+    needs: [docker]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/pre-production'
+
+    steps:
+      - name: Trigger Render deploy (backend)
+        run: |
+          curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_BACKEND_PREPROD }}"
+
+      - name: Trigger Render deploy (frontend)
+        run: |
+          curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_FRONTEND_PREPROD }}"
