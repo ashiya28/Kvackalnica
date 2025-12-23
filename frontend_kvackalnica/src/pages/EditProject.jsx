@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import Header from "../components/Header";
 import YarnCorner from "../components/YarnCorner";
 import HomeButton from "../components/HomeButton";
+import { API_BASE } from "../apiBase";
 
 function EditProject() {
     const { projectId } = useParams();
@@ -28,7 +29,7 @@ function EditProject() {
 
     const fetchProject = async () => {
         try {
-            const response = await fetch(`http://localhost:5000/api/projects/${projectId}`, {
+            const response = await fetch(`${API_BASE}/api/projects/${projectId}`, {
                 method: 'GET',
                 headers: getAuthHeaders()
             });
@@ -64,7 +65,7 @@ function EditProject() {
         setIsUpdating(true);
 
         try {
-            const response = await fetch(`http://localhost:5000/api/projects/${projectId}`, {
+            const response = await fetch(`${API_BASE}/api/projects/${projectId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

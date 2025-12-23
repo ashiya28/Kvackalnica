@@ -2,6 +2,7 @@ import React from 'react';
 import YarnCorner from "../components/YarnCorner";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { API_BASE } from "../apiBase";
 
 function Registration() {
   const [username, setUsername] = useState("");
@@ -12,7 +13,7 @@ function Registration() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const response = await fetch('http://localhost:5000/api/users/register', {
+    const response = await fetch(`${API_BASE}/api/users/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
