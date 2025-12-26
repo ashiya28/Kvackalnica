@@ -211,24 +211,3 @@ jobs:
       - name: Trigger Render deploy (frontend)
         run: |
           curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_FRONTEND_PREPROD }}"
-
-  deploy-pages:
-    name: Deploy Project Page (GitHub Pages)
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: project-page
-
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v4
-
-
