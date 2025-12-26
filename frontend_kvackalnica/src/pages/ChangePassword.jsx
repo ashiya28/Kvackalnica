@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import Header from "../components/Header";
 import YarnCorner from "../components/YarnCorner";
 import HomeButton from "../components/HomeButton";
+import { API_BASE } from "../apiBase";
 
 function ChangePassword() {
     const [oldPassword, setOldPassword] = useState('');
@@ -43,7 +44,7 @@ function ChangePassword() {
         setIsLoading(true);
 
         try {
-            const response = await fetch('http://localhost:5000/api/users/change-password', {
+            const response = await fetch(`${API_BASE}/api/users/change-password`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

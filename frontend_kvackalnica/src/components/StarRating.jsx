@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE } from "../apiBase";
 
 export default function StarRating({ projectId, initial = 3, onSaved, getAuthHeaders }) {
   const [value, setValue] = useState(initial);
@@ -18,7 +19,7 @@ export default function StarRating({ projectId, initial = 3, onSaved, getAuthHea
     if (!headers['Content-Type']) headers['Content-Type'] = 'application/json';
 
     try {
-      const res = await fetch(`http://localhost:5000/api/projects/${projectId}/difficulty`, {
+      const res = await fetch(`${API_BASE}/api/projects/${projectId}/difficulty`, {
         method: 'PATCH',
         headers,
         body: JSON.stringify({ difficulty_rating: v })

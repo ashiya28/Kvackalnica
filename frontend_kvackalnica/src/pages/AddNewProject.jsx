@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import Header from "../components/Header";
 import YarnCorner from "../components/YarnCorner";
 import HomeButton from "../components/HomeButton";
+import { API_BASE } from "../apiBase";
 
 function AddNewProject() {
     const [title, setTitle] = useState('');
@@ -24,7 +25,7 @@ function AddNewProject() {
         setIsLoading(true);
 
         try {
-            const response = await fetch('http://localhost:5000/api/projects/add', {
+            const response = await fetch(`${API_BASE}/api/projects/add`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
