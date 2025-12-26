@@ -184,7 +184,7 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/kvackalnica-frontend:${{ steps.vars.outputs.tag }}
           build-args: |
-            VITE_API_URL=${{ steps.vars.outputs.tag }}
+            VITE_API_URL=${{ vars.VITE_API_URL }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
