@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="sl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kvackalnica</title>
+  </head>
+  <body>
+    <h1>Kvackalnica</h1>
+
+    <h2>Člani ekipe</h2>
+    <ul>
+      <li>Anja Molnar</li>
+    </ul>
+
+    <h2>Opis projekta</h2>
+    <p>
+      Kvackalnica je spletna aplikacija, kjer lahko ljubitelji kvačkalskega hobija hranijo informacije o vseh svojih projektih na istem mestu.
+    </p>
+  </body>
+</html>
