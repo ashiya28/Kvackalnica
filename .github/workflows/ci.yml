@@ -267,7 +267,7 @@ jobs:
   docker-prod:
     name: Build & Push Docker Images (Production)
     runs-on: ubuntu-latest
-    needs: [build-frontend, build-backend, quality-gate]
+    needs: [build-frontend, build-backend, sonarcloud]
     if: github.event_name == 'push' && github.ref == 'refs/heads/production'
     environment: Production
 
@@ -318,7 +318,7 @@ jobs:
 
 
   sonarcloud:
-    name: SonarCloud Scan
+    name: SonarCloud Scan + Quality Gate
     runs-on: ubuntu-latest
     needs: [test-frontend, test-backend]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production')
@@ -340,26 +340,14 @@ jobs:
           name: backend-coverage
           path: backend_kvackalnica/coverage
 
-      - name: Debug coverage files
-        run: |
-          ls -la frontend_kvackalnica/coverage || true
-          ls -la backend_kvackalnica/coverage || true
-          test -f frontend_kvackalnica/coverage/lcov.info && echo "Frontend lcov OK" || echo "Frontend lcov MISSING"
-          test -f backend_kvackalnica/coverage/lcov.info && echo "Backend lcov OK" || echo "Backend lcov MISSING"
-
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v3
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-
-  quality-gate:
-    name: SonarCloud Quality Gate
-    runs-on: ubuntu-latest
-    needs: [sonarcloud]
-    steps:
-      - name: Check Quality Gate
+      - name: Quality Gate
         uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonarcloud.io
+
