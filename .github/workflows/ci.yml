@@ -6,12 +6,6 @@ on:
   pull_request:
     branches: [ main, pre-production, production ]
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-
 jobs:
   test-frontend:
     name: Test Frontend
@@ -211,3 +205,5 @@ jobs:
       - name: Trigger Render deploy (frontend)
         run: |
           curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_FRONTEND_PREPROD }}"
+
+
