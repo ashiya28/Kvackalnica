@@ -340,6 +340,13 @@ jobs:
           name: backend-coverage
           path: backend_kvackalnica/coverage
 
+      - name: Debug coverage files
+        run: |
+          ls -la frontend_kvackalnica/coverage || true
+          ls -la backend_kvackalnica/coverage || true
+          test -f frontend_kvackalnica/coverage/lcov.info && echo "Frontend lcov OK" || echo "Frontend lcov MISSING"
+          test -f backend_kvackalnica/coverage/lcov.info && echo "Backend lcov OK" || echo "Backend lcov MISSING"
+
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v3
         env:
