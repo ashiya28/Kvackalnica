@@ -77,7 +77,7 @@ jobs:
       run:
         working-directory: frontend_kvackalnica
     env:
-      VITE_API_URL: http://localhost:5000
+      VITE_API_URL: https://kvackalnica-backend-prod.onrender.com
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -131,91 +131,27 @@ jobs:
             !backend_kvackalnica/node_modules
             !backend_kvackalnica/coverage
 
-  docker:
-    name: Build & Push Docker Images
+
+  docker-images:
+    name: Docker Build & Push (dev/prod)
     runs-on: ubuntu-latest
     needs: [build-frontend, build-backend]
-    if: github.ref == 'refs/heads/pre-production' || github.ref == 'refs/heads/production'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production')
+
+    environment: ${{ github.ref == 'refs/heads/production' && 'Production' || 'Development' }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      # BACKEND IMAGE
-      - name: Docker meta (backend)
-        id: meta_backend
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ secrets.DOCKER_USERNAME }}/kvackalnica-backend
-          tags: |
-            type=ref,event=branch
-            type=sha
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/production' }}
-
-      - name: Build & push backend
-        uses: docker/build-push-action@v6
-        with:
-          context: ./backend_kvackalnica
-          file: ./backend_kvackalnica/Dockerfile
-          push: true
-          tags: ${{ steps.meta_backend.outputs.tags }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      # FRONTEND IMAGE
-      - name: Docker meta (frontend)
-        id: meta_frontend
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ secrets.DOCKER_USERNAME }}/kvackalnica-frontend
-          tags: |
-            type=ref,event=branch
-            type=sha
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/production' }}
-
-      - name: Build & push frontend
-        uses: docker/build-push-action@v6
-        with:
-          context: ./frontend_kvackalnica
-          file: ./frontend_kvackalnica/Dockerfile
-          push: true
-          tags: ${{ steps.meta_frontend.outputs.tags }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  deploy-preprod:
-    name: Deploy to Render (pre-production)
-    runs-on: ubuntu-latest
-    needs: [docker]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/pre-production'
-
-    steps:
-      - name: Trigger Render deploy (backend)
+      - name: Decide tag (dev/prod)
+        id: vars
         run: |
-          curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_BACKEND_PREPROD }}"
-
-      - name: Trigger Render deploy (frontend)
-        run: |
-          curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_FRONTEND_PREPROD }}"
-
-  docker-dev:
-    name: Build & Push Docker Images (Development)
-    runs-on: ubuntu-latest
-    needs: [build-frontend, build-backend]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    environment: Development
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+          if [ "${GITHUB_REF}" = "refs/heads/production" ]; then
+            echo "tag=prod" >> $GITHUB_OUTPUT
+          else
+            echo "tag=dev" >> $GITHUB_OUTPUT
+          fi
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -227,94 +163,46 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       # BACKEND
-      - name: Docker meta (backend dev)
-        id: meta_backend_dev
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ secrets.DOCKER_USERNAME }}/kvackalnica-backend
-          tags: |
-            type=raw,value=dev
-
-      - name: Build & push backend (dev)
+      - name: Build & push backend
         uses: docker/build-push-action@v6
         with:
           context: ./backend_kvackalnica
           file: ./backend_kvackalnica/Dockerfile
           push: true
-          tags: ${{ steps.meta_backend_dev.outputs.tags }}
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/kvackalnica-backend:${{ steps.vars.outputs.tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       # FRONTEND
-      - name: Docker meta (frontend dev)
-        id: meta_frontend_dev
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ secrets.DOCKER_USERNAME }}/kvackalnica-frontend
-          tags: |
-            type=raw,value=dev
-
-      - name: Build & push frontend (dev)
+      - name: Build & push frontend
         uses: docker/build-push-action@v6
         with:
           context: ./frontend_kvackalnica
           file: ./frontend_kvackalnica/Dockerfile
           push: true
-          tags: ${{ steps.meta_frontend_dev.outputs.tags }}
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/kvackalnica-frontend:${{ steps.vars.outputs.tag }}
+          build-args: |
+            VITE_API_URL=${{ steps.vars.outputs.tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  docker-prod:
-    name: Build & Push Docker Images (Production)
+
+  deploy-prod:
+    name: Deploy to Render (Production)
     runs-on: ubuntu-latest
-    needs: [build-frontend, build-backend]
+    needs: [docker-images]
     if: github.event_name == 'push' && github.ref == 'refs/heads/production'
     environment: Production
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Trigger Render deploy (backend prod)
+        run: curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_BACKEND_PROD }}"
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Docker meta (backend prod)
-        id: meta_backend_prod
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ secrets.DOCKER_USERNAME }}/kvackalnica-backend
-          tags: |
-            type=raw,value=prod
-
-      - name: Build & push backend (prod)
-        uses: docker/build-push-action@v6
-        with:
-          context: ./backend_kvackalnica
-          file: ./backend_kvackalnica/Dockerfile
-          push: true
-          tags: ${{ steps.meta_backend_prod.outputs.tags }}
-
-      - name: Docker meta (frontend prod)
-        id: meta_frontend_prod
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ secrets.DOCKER_USERNAME }}/kvackalnica-frontend
-          tags: |
-            type=raw,value=prod
-
-      - name: Build & push frontend (prod)
-        uses: docker/build-push-action@v6
-        with:
-          context: ./frontend_kvackalnica
-          file: ./frontend_kvackalnica/Dockerfile
-          push: true
-          tags: ${{ steps.meta_frontend_prod.outputs.tags }}
+      - name: Trigger Render deploy (frontend prod)
+        run: curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_FRONTEND_PROD }}"
+        
 
 
   sonarcloud:
