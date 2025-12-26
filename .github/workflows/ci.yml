@@ -267,7 +267,7 @@ jobs:
   docker-prod:
     name: Build & Push Docker Images (Production)
     runs-on: ubuntu-latest
-    needs: [build-frontend, build-backend]
+    needs: [build-frontend, build-backend, sonarcloud]
     if: github.event_name == 'push' && github.ref == 'refs/heads/production'
     environment: Production
 
@@ -315,3 +315,39 @@ jobs:
           file: ./frontend_kvackalnica/Dockerfile
           push: true
           tags: ${{ steps.meta_frontend_prod.outputs.tags }}
+
+
+  sonarcloud:
+    name: SonarCloud Scan + Quality Gate
+    runs-on: ubuntu-latest
+    needs: [test-frontend, test-backend]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download frontend coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend_kvackalnica/coverage
+
+      - name: Download backend coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend_kvackalnica/coverage
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v3
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Quality Gate
+        uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
+
